@@ -1,0 +1,150 @@
+---
+title: "html_prueba"
+author: "clase programacion"
+date: "25 de febrero"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Opciones en los fragmentos de codigo
+
++ *eval*: TRUE. si queremos evaluar el codigo de incluir los resultados, pero no los resultados. .
+el +al principio es para crear guiones. 
+EL EVAl ES PARA LA FORMULA, SI QUIERO QUE SE MUESTRE O NO.
+
+dos espacios es un nuevo ringlon. 
+
+con el siguiente ejemplo me saca el codigo.
+```{r eval = TRUE}
+summary (pressure)
+```
+
++ *echo*: TRUE indica si muestra el codigo a la par que los resultados.  
+Incluyo el ejemplo eval = FALSE & echo = FALSE.
+EL ECHO ES PARA EL RESULTADO, SI QUIERO QUE SE MUESTRE O NO.
+
+con el siguiente ejemplo me saca el resultado
+
+```{r eval = FALSE, echo = TRUE} 
+summary (pressure)
+```
+
++ *collapse*: FALSE. debe combinar la salida del texto y el codigo fuente.
+combina tanto el scrip como el resultado 
+
+con este script me saca el script, el resultado y encima colapsado en el mismo resultado.
+
+```{r eval = TRUE, echo = TRUE, collapse=TRUE}
+summary (pressure)
+```
+
++ *warning, message y error*: TRUE. Si se muestran advertencias, mensajes en el documento de salida. Si le ponemos false, no nos lo mostrará. lo pondremos segun nuestro mensaje, si es warning, massage o error. 
+
++ *include*: si se debe incluir algo de un fragmento el codigo en el documento de salida. 
+
+quiero que me lo evalues pero que no me incluya el resultado ni el script. 
+
+incluye el codigo de la linea con una media de temeperatura de `r mean(pressure$temperature)`
+
+```{r, eval = TRUE, echo = FALSE, include=FALSE} 
+pressure <- subset (pressure, temperature < 100)
+```
+
+__nos hace una seleccion de la temperatura media e inferior a 100, y así obtendremos una nueva media. si observacmos, lo ejecuta pero no lo muestra.__  
+
+incluye el codigo de la linea con una media de temeperatura de `r mean(pressure$temperature)`
+
++ *fig.width* y *fid.height*: especificamos el tamaño en pulgadas. tambien podemos especificarlo con *fig.dim*= c(6,4), que seria 6 de ancho y 4 alto. 
+
++ *out.width* y *out.height*: tamaño descalado de salida.
+
++ *fig.align*: centrado de la figura. 
+
++ *fig.cap*: pie de figura. 
+
+__para poner pie de figura__
+
+```{r, echo = TRUE, fig.align='center'}
+plot (pressure, cex= 3, pch = 12, col= "red") #cex indica tamaño de punto, el pch indica la forma del punto y color
+```
+<!-- para poner comentario que no se leen --> 
+
+## Tablas con R markdown. 
+
+vamos a hacer la peor tabla del mundo. 
+
+esta es la tabla | columna 2
+-----------------|-------------
+que pasa aqui | y a ti que te pasa
+lo que a ti no te pasa | que chistoso eres
+---------------------------------------
+
+para hacer tablas mas cheveres. __https://davidgohel.github.io/flextable/articles/overview.html__
+
+```{r,eval=TRUE, echo=FALSE, message=FALSE, include=FALSE}
+library(flextable)
+library(officer)
+library (tidyverse)
+
+str(iris)
+names (iris)
+iris_tidy <- iris %>% #the pipe, sirve para anidar distintas filas de codigo. Lo que hay antes de la pipa, lo pone despues. 
+  mutate_if(is.numeric, round,digits = 1) #si es numerica, ponlo con 1 digitos, es decir numero entero
+str (iris_tidy)
+
+## creamos la tabla
+
+doc <- read_docx()# "ponemos la ruta de destino"
+iris_sel <- iris_tidy %>%
+  rename("sepal lenght" = Sepal.Length, "petal lenght" = Petal.Length)
+
+names (iris_sel)
+
+ftable <- flextable(iris_sel) # ftable <- flextable(iris_sel) %>% align ()
+ftable <- align(ftable, align = "center", part= "header") #para alinearlo
+ftable <- align(ftable, align = "center", part= "body")
+ftable <- colformat_num (ftable, col_keys = c("sepal lenght", "petal lenght"), digits = 0) #solo quiero cambios en a 0 digitos en esas columnas
+doc <- body_add_flextable(doc, value = ftable)
+print(doc, target = "mi primera tabla.docx")
+
+```
+para crear la tabla en un archivo. 
+_doc <- read_docx ("miruta/mitabla.docx")_
+
+## calcular una tabla la media y la desviacion estandar para cada una de las especies. 
+```{r,eval=TRUE, echo=FALSE, message=FALSE, include=FALSE}
+library(plyr)
+
+doc <- read_docx()
+
+#con tapply
+mpw <- tapply(iris$Petal.Length, iris$Petal.Length, mean)
+sdpw <- tapply(iris$Petal.Length, iris$Petal.Length, sd)
+
+#con ddply
+intento <- ddply(iris,.(Species), summarize,
+                 mean = mean(Petal.Length),
+                 sd = sd (Petal.Length))
+
+ftable <- flextable(intento) # ftable <- flextable(iris_sel) %>% align ()
+ftable <- align(ftable, align = "center", part= "header") #para alinearlo
+ftable <- align(ftable, align = "center", part= "body")
+ftable <- colformat_num (ftable, col_keys = c("mean", "sd"), digits = 1) #solo quiero cambios en a 0 digitos en esas columnas
+doc <- body_add_flextable(doc, value = ftable)
+print(doc, target = "mi primera tabla.docx")
+
+```
+
